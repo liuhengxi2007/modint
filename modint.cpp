@@ -38,10 +38,12 @@ namespace modint
 		array<int,2> t{};
 		while(true)
 		{
+			if(o==0)c={a[1],a[0]};
 			if(o==1)c={(u128)a[0]+b[0],(u128)a[1]+b[1]};
 			if(o==2)c={(u128)a[0]+b[1],(u128)a[1]+b[0]};
 			if(o==3)c={max((u128)a[0]*b[0],(u128)a[1]*b[1]),max((u128)a[0]*b[1],(u128)a[1]*b[0])};
 			if(fit(c))break;
+			if(o==0)throw;
 			if(o==1||o==2)
 			{
 				if(width(a)>=width(b))a=csub(a),t[0]=1;
@@ -97,6 +99,14 @@ namespace modint
 		if constexpr(t[1]==1)b.a=csub<B::V[0],B::V[1]>(b.a);
 		if constexpr(t[1]==2)b.a=barrett<B::V[0],B::V[1]>(b.a);
 	}
+	template<typename A>enable_if_t<A::is_mint_expr,A> operator+(A a)
+	{
+		return a;
+	}
+	template<typename A>enable_if_t<A::is_mint_expr,mint_expr<0,A,mint_const<0>>> operator-(A a)
+	{
+		return {-(ull)a.a};
+	}
 	template<typename A,typename B>enable_if_t<A::is_mint_expr&&B::is_mint_expr,mint_expr<1,A,B>> operator+(A a,B b)
 	{
 		prepare<1,A,B>(a,b);
@@ -130,11 +140,11 @@ using modint::literal::operator""_m;
 using modint::mint;
 uint func(uint a,uint b,uint c)
 {
-	return (uint)((a+(ull)b*c)%MOD);
+	return (uint)((a+(ull)b*(MOD-c))%MOD);
 }
 mint func(mint a,mint b,mint c)
 {
-	return a+b*c;
+	return a+b*-c;
 }
 constexpr int N=1e8;
 void test0()
