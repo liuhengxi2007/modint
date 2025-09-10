@@ -85,8 +85,8 @@ namespace modint
 		uint to_mint_uint()
 		{
 			constexpr ull d0=div(V[0]),d1=div(V[1]);
-			if constexpr(d0+d1<=1)return (uint)(a+d0*MOD);
-			if constexpr(d0+d1<=2)return (uint)csub<V[0],V[1]>(a);
+			if constexpr(d0+d1<=2)return (uint)(a+d1*MOD);
+			if constexpr(d0+d1<=4)return (uint)csub<V[0],V[1]>(a);
 			return (uint)barrett<V[0],V[1]>(a);
 		}
 		mint to_mint();
@@ -140,11 +140,11 @@ using modint::literal::operator""_m;
 using modint::mint;
 uint func(uint a,uint b,uint c)
 {
-	return (uint)((a+(ull)b*(MOD-c))%MOD);
+	return (uint)((a+(ull)b*(MOD-c)%MOD*(a+b))%MOD);
 }
 mint func(mint a,mint b,mint c)
 {
-	return a+b*-c;
+	return a+b*-c*(a+b);
 }
 constexpr int N=1e8;
 void test0()
@@ -169,8 +169,20 @@ void test1()
 	}
 	printf("%d %d %d\n",a.to_int(),b.to_int(),c.to_int());
 }
+void test2()
+{
+	uint a=1;
+	for(int i=0;i<10*N;++i)a=(uint)(36ull*a%MOD);
+	printf("%d\n",a);
+}
+void test3()
+{
+	mint a=1_m;
+	for(int i=0;i<10*N;++i)a=a*6_m*3_m*2_m;
+	printf("%d\n",a.to_int());
+}
 int main()
 {
-	test1();
+	test3();
 	return 0;
 }
