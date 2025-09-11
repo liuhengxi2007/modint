@@ -181,7 +181,7 @@ namespace modint
 		}
 		constexpr mint_expr<3,mint,mint> inv()
 		{
-			if(!a)throw runtime_error("division by zero");
+			if(a==0||a==MOD)throw runtime_error("division by zero");
 			return pow(MOD-2);
 		}
 	};
@@ -242,7 +242,7 @@ void test3()
 }
 int main()
 {
-	mint a=1_m/2_m*3_m;
+	mint a=1_m/(2_m+3_m-5_m);
 	mint b=a+1000_m;
 	a/=b;
 	printf("%d\n",a.to_int());
