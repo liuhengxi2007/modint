@@ -6,11 +6,11 @@ typedef unsigned uint;
 typedef unsigned long long ull;
 typedef __uint128_t u128;
 constexpr uint MOD=1000000007;
+constexpr uint qpow(ull a,uint b,ull c=1){for(;b;b>>=1,(a*=a)%=MOD)if(b&1)(c*=a)%=MOD;return (uint)c;}
 namespace modint
 {
 	using namespace std;
 	constexpr ull INV=-1ull/MOD;
-	constexpr ull qpow(ull a,uint b,ull c=1){for(;b;b>>=1,(a*=a)%=MOD)if(b&1)(c*=a)%=MOD;return (int)c;}
 	constexpr ull div(ull a){return a/MOD+!!(a%MOD);}
 	constexpr ull width(array<ull,2> a){return div(a[0])+div(a[1]);}
 	constexpr bool fit(array<u128,2> a)
@@ -203,7 +203,7 @@ mint func(mint a,mint b,mint c)
 {
 	return a*b+b*-c*(a+b);
 }
-constexpr int N=1e8;
+constexpr int N=1e8,M=1e4;
 void test0()
 {
 	uint a=1235,b=2134,c=9442;
@@ -240,11 +240,25 @@ void test3()
 	for(int i=0;i<10*N;++i)a*=6_m*3_m*2_m;
 	printf("%d\n",a.to_int());
 }
+void test4()
+{
+	uint ans=0;
+	for(int i=1;i<M;++i)for(int j=1;j<M;++j)
+	{
+		ans+=qpow(j,i*(i-1));
+		if(ans>=MOD)ans-=MOD;
+	}
+	printf("%d\n",ans);
+}
+void test5()
+{
+	mint ans=0_m;
+	for(int i=1;i<M;++i)for(int j=1;j<M;++j)
+		ans+=mint::raw(j).pow(i*(i-1));
+	printf("%d\n",ans.to_int());
+}
 int main()
 {
-	mint a=1_m/(2_m+3_m-5_m);
-	mint b=a+1000_m;
-	a/=b;
-	printf("%d\n",a.to_int());
+	test5();
 	return 0;
 }
