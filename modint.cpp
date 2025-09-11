@@ -107,21 +107,17 @@ namespace modint
 	{
 		return {-(ull)a.a};
 	}
-	template<typename A,typename B>enable_if_t<A::is_mint_expr&&B::is_mint_expr,mint_expr<1,A,B>> operator+(A a,B b)
-	{
-		prepare<1,A,B>(a,b);
-		return {(ull)a.a+b.a};
+#define MODINT_DEFINE_OP(n_op,op) \
+	template<typename A,typename B>enable_if_t<A::is_mint_expr&&B::is_mint_expr,mint_expr<n_op,A,B>> \
+		operator op(A a,B b) \
+	{ \
+		prepare<n_op,A,B>(a,b); \
+		return {(ull)a.a op (ull)b.a}; \
 	}
-	template<typename A,typename B>enable_if_t<A::is_mint_expr&&B::is_mint_expr,mint_expr<2,A,B>> operator-(A a,B b)
-	{
-		prepare<2,A,B>(a,b);
-		return {(ull)a.a-b.a};
-	}
-	template<typename A,typename B>enable_if_t<A::is_mint_expr&&B::is_mint_expr,mint_expr<3,A,B>> operator*(A a,B b)
-	{
-		prepare<3,A,B>(a,b);
-		return {(ull)a.a*b.a};
-	}
+	MODINT_DEFINE_OP(1,+)
+	MODINT_DEFINE_OP(2,-)
+	MODINT_DEFINE_OP(3,*)
+#undef MODINT_DEFINE_OP
 	struct mint
 	{
 		static constexpr bool is_mint_expr=true;
@@ -132,6 +128,17 @@ namespace modint
 		template<int O,typename A,typename B>mint(mint_expr<O,A,B> b):a(b.to_mint_uint()){}
 		uint raw()const{return a;}
 		uint to_int()const{return a==2*MOD?0:min(a,a-MOD);}
+#define MODINT_DEFINE_OP(n_op,op) \
+		template<typename B>enable_if_t<B::is_mint_expr,mint&> \
+			operator op##=(B b) \
+		{ \
+			*this=*this op b; \
+			return *this; \
+		}
+		MODINT_DEFINE_OP(1,+)
+		MODINT_DEFINE_OP(2,-)
+		MODINT_DEFINE_OP(3,*)
+#undef MODINT_DEFINE_OP
 	};
 	template<int O,typename A,typename B>
 	mint mint_expr<O,A,B>::to_mint(){return mint(*this);}
@@ -140,11 +147,11 @@ using modint::literal::operator""_m;
 using modint::mint;
 uint func(uint a,uint b,uint c)
 {
-	return (uint)((a+(ull)b*(MOD-c)%MOD*(a+b))%MOD);
+	return (uint)(((ull)a*b+(ull)b*(MOD-c)%MOD*(a+b))%MOD);
 }
 mint func(mint a,mint b,mint c)
 {
-	return a+b*-c*(a+b);
+	return a*b+b*-c*(a+b);
 }
 constexpr int N=1e8;
 void test0()
@@ -152,9 +159,11 @@ void test0()
 	uint a=1235,b=2134,c=9442;
 	for(int i=0;i<N;++i)
 	{
-		a=func(a,b,c);
-		b=func(b,c,a);
-		c=func(c,a,b);
+		a+=func(a,b,c);
+		if(a>=MOD)a-=MOD;
+		b-=func(b,c,a);
+		if(b>=MOD)b+=MOD;
+		c=(uint)((ull)c*func(c,a,b)%MOD);
 	}
 	printf("%d %d %d\n",a,b,c);
 }
@@ -163,9 +172,9 @@ void test1()
 	mint a=1235_m,b=2134_m,c=9442_m;
 	for(int i=0;i<N;++i)
 	{
-		a=func(a,b,c);
-		b=func(b,c,a);
-		c=func(c,a,b);
+		a+=func(a,b,c);
+		b-=func(b,c,a);
+		c*=func(c,a,b);
 	}
 	printf("%d %d %d\n",a.to_int(),b.to_int(),c.to_int());
 }
@@ -183,6 +192,6 @@ void test3()
 }
 int main()
 {
-	test3();
+	test1();
 	return 0;
 }
