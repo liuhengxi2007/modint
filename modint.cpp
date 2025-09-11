@@ -156,16 +156,17 @@ namespace modint
 		template<uint v>constexpr mint(mint_const<v>):a(v){}
 		template<int O,typename A,typename B>constexpr mint(mint_expr<O,A,B> b):a(b.to_mint_uint()){}
 		constexpr uint to_int()const{return a==2*MOD?0:min(a,a-MOD);}
-#define MODINT_DEFINE_OP(n_op,op) \
+#define MODINT_DEFINE_OP(op) \
 		template<typename B>constexpr enable_if_t<B::is_mint_expr,mint&> \
 			operator op##=(B b) \
 		{ \
 			*this=*this op b; \
 			return *this; \
 		}
-		MODINT_DEFINE_OP(1,+)
-		MODINT_DEFINE_OP(2,-)
-		MODINT_DEFINE_OP(3,*)
+		MODINT_DEFINE_OP(+)
+		MODINT_DEFINE_OP(-)
+		MODINT_DEFINE_OP(*)
+		MODINT_DEFINE_OP(/)
 #undef MODINT_DEFINE_OP
 		constexpr mint_expr<3,mint,mint> pow(uint b)
 		{
@@ -243,6 +244,7 @@ int main()
 {
 	mint a=1_m/2_m*3_m;
 	mint b=a+1000_m;
-	printf("%d\n",b.to_int());
+	a/=b;
+	printf("%d\n",a.to_int());
 	return 0;
 }
