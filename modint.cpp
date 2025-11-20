@@ -79,7 +79,7 @@ namespace modint
 		template<uint s,char... c>struct parser;
 		template<uint s,char c,char... r>struct parser<s,c,r...>
 		{
-			static_assert(c>='0'&&c<='9',"Non-digit character in literal");
+			static_assert(c>='0'&&c<='9',"non-digit character in literal");
 			static constexpr uint v=parser<(s*10ull+(c-'0'))%MOD,r...>::v;
 		};
 		template<uint s>struct parser<s>{static constexpr uint v=s;};
@@ -181,8 +181,18 @@ namespace modint
 		}
 		constexpr mint_expr<3,mint,mint> inv()
 		{
-			if(a==0||a==MOD)throw runtime_error("division by zero");
+			if(a==0||a==MOD||a==2*MOD)throw runtime_error("division by zero");
 			return pow(MOD-2);
+		}
+		constexpr mint &operator+=(mint b)
+		{
+			a+=b.a;a=min(a,a-2*MOD);
+			return *this;
+		}
+		constexpr mint &operator-=(mint b)
+		{
+			a-=b.a;a=min(a,a+2*MOD);
+			return *this;
 		}
 	};
 
@@ -199,7 +209,7 @@ uint func(uint a,uint b,uint c)
 {
 	return (uint)(((ull)a*b+(ull)b*(MOD-c)%MOD*(a+b))%MOD);
 }
-mint func(mint a,mint b,mint c)
+auto func(mint a,mint b,mint c)
 {
 	return a*b+b*-c*(a+b);
 }
@@ -259,6 +269,6 @@ void test5()
 }
 int main()
 {
-	test5();
+	test1();
 	return 0;
 }
