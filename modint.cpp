@@ -21,6 +21,21 @@ namespace modint
 	}
 	constexpr array<ull,2> csub(array<ull,2> a){return {((width(a)+1)>>1)*MOD,0};}
 	constexpr array<ull,2> barrett([[maybe_unused]]array<ull,2> a){return {2*MOD,0};}
+	constexpr int align(array<ull,2> &a,array<ull,2> &b)
+	{
+		if(a[1]>b[1])
+		{
+			ull d=(div(a[1])-div(b[1]))*MOD;
+			a[0]+=d;a[1]-=min(a[1],d);
+			return 0;
+		}
+		else
+		{
+			ull d=(div(b[1])-div(a[1]))*MOD;
+			b[0]+=d;b[1]-=min(b[1],d);
+			return 1;
+		}
+	}
 	template<ull A,ull B>ull csub(ull x)
 	{
 		constexpr ull a=div(A),b=div(B),c=((a+b)>>1)*MOD;
@@ -34,6 +49,10 @@ namespace modint
 		x+=b*MOD;
 		return x-=(ull)(((u128)x*INV>>64)*MOD);
 	}
+	template<ull A,ull B>constexpr ull align(ull x)
+	{
+		return x+(div(A)-div(B))*MOD;
+	}
 	constexpr pair<array<ull,2>,array<int,2>> get_range(int o,array<ull,2> a,array<ull,2> b)
 	{
 		array<u128,2> c{};
@@ -44,6 +63,7 @@ namespace modint
 			if(o==1)c={(u128)a[0]+b[0],(u128)a[1]+b[1]};
 			if(o==2)c={(u128)a[0]+b[1],(u128)a[1]+b[0]};
 			if(o==3)c={max((u128)a[0]*b[0],(u128)a[1]*b[1]),max((u128)a[0]*b[1],(u128)a[1]*b[0])};
+			if(o==4)c={max(a[0],b[0]),max(a[1],b[1])};
 			if(fit(c))break;
 			if(o==0)throw;
 			if(o==1||o==2)
@@ -56,12 +76,14 @@ namespace modint
 				if(width(a)>=width(b))a=barrett(a),t[0]=2;
 				else b=barrett(b),t[1]=2;
 			}
+			if(o==4)t[align(a,b)]=3;
 		}
 		return {{(ull)c[0],(ull)c[1]},t};
 	}
 
 	template<uint A>struct mint_const;
 	template<int O,typename A,typename B>struct mint_expr;
+	struct mint_acc;
 	struct mint;
 
 	template<uint A>
@@ -113,8 +135,10 @@ namespace modint
 		constexpr array<int,2> t=get_range(O,A::V,B::V).second;
 		if constexpr(t[0]==1)a.a=csub<A::V[0],A::V[1]>(a.a);
 		if constexpr(t[0]==2)a.a=barrett<A::V[0],A::V[1]>(a.a);
+		if constexpr(t[0]==3)a.a=align<A::V[1],B::V[1]>(a.a);
 		if constexpr(t[1]==1)b.a=csub<B::V[0],B::V[1]>(b.a);
 		if constexpr(t[1]==2)b.a=barrett<B::V[0],B::V[1]>(b.a);
+		if constexpr(t[1]==3)b.a=align<B::V[1],A::V[1]>(b.a);
 	}
 	template<typename A>constexpr enable_if_t<A::is_mint_expr,A> operator+(A a)
 	{
@@ -141,6 +165,30 @@ namespace modint
 	{
 		return a*b.inv();
 	}
+	template<typename A,typename B>constexpr enable_if_t<A::is_mint_expr&&B::is_mint_expr,mint_expr<4,A,B>>
+		cond(bool c,A a,B b)
+	{
+		prepare<4,A,B>(a,b);
+		return {c?(ull)a.a:(ull)b.a};
+	}
+
+	struct mint_acc
+	{
+		static constexpr ull VAL=-1ull%MOD+1;
+		ull a0,a1;
+		template<uint v>constexpr mint_acc(mint_const<v>):a0(v),a1(0){}
+		template<int O,typename A,typename B>constexpr mint_acc(mint_expr<O,A,B> b):a0(b.to_mint_uint()),a1(0){}
+		template<typename B>constexpr enable_if_t<B::is_mint_expr,void> operator+=(B b)
+		{
+			a0+=b.a;a1+=a0<b.a;
+		}
+		constexpr uint to_mint_uint()
+		{
+			a0=barrett<-1u,0>(a0);a1=barrett<-1u,0>(a1);
+			return (uint)barrett<-1u,0>(a1*VAL+a0);
+		}
+		constexpr mint to_mint();
+	};
 
 	struct mint
 	{
@@ -155,6 +203,7 @@ namespace modint
 		mint()=default;
 		template<uint v>constexpr mint(mint_const<v>):a(v){}
 		template<int O,typename A,typename B>constexpr mint(mint_expr<O,A,B> b):a(b.to_mint_uint()){}
+		constexpr mint(mint_acc &b):a(b.to_mint_uint()){}
 		constexpr uint to_int()const{return a==2*MOD?0:min(a,a-MOD);}
 #define MODINT_DEFINE_OP(op) \
 		template<typename B>constexpr enable_if_t<B::is_mint_expr,mint&> \
@@ -170,7 +219,7 @@ namespace modint
 #undef MODINT_DEFINE_OP
 		constexpr mint_expr<3,mint,mint> pow(uint b)
 		{
-			mint x=*this,y=*this;y.a=1;
+			mint x=*this,y=mint_const<1>();
 			if(!b)return y*y;
 			for(;b>1;b>>=1)
 			{
@@ -202,9 +251,10 @@ namespace modint
 	constexpr mint_expr<3,mint,mint> mint_expr<O,A,B>::pow(uint b){return mint(*this).pow(b);}
 	template<int O,typename A,typename B>
 	constexpr mint_expr<3,mint,mint> mint_expr<O,A,B>::inv(){return mint(*this).inv();}
+	constexpr mint mint_acc::to_mint(){return mint(*this);}
 }
 using modint::literal::operator""_m;
-using modint::mint;
+using modint::mint,modint::cond,modint::mint_acc;
 uint func(uint a,uint b,uint c)
 {
 	return (uint)(((ull)a*b+(ull)b*(MOD-c)%MOD*(a+b))%MOD);
@@ -255,20 +305,20 @@ void test4()
 	uint ans=0;
 	for(int i=1;i<M;++i)for(int j=1;j<M;++j)
 	{
-		ans+=qpow(j,i*(i-1));
+		ans+=qpow(j,i*(i-1),(i^j)&1?i+j:i*j);
 		if(ans>=MOD)ans-=MOD;
 	}
 	printf("%d\n",ans);
 }
 void test5()
 {
-	mint ans=0_m;
+	mint_acc ans=0_m;
 	for(int i=1;i<M;++i)for(int j=1;j<M;++j)
-		ans+=mint::raw(j).pow(i*(i-1));
-	printf("%d\n",ans.to_int());
+		ans+=mint::raw(j).pow(i*(i-1))*cond((i^j)&1,mint::raw(i)+mint::raw(j),mint::raw(i)*mint::raw(j));
+	printf("%d\n",ans.to_mint().to_int());
 }
 int main()
 {
-	test1();
+	test5();
 	return 0;
 }
