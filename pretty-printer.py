@@ -25,8 +25,8 @@ class MintPrinter:
 		return str(value)
 
 def mint_printer_lookup(val):
-	type_name = str(val.type)
-	if type_name.startswith('modint::mint'):
+	type_name = str(val.type.strip_typedefs().unqualified())
+	if type_name.startswith('modint::mint') and val.type.code != gdb.TYPE_CODE_ARRAY:
 		return MintPrinter(val)
 	return None
 
