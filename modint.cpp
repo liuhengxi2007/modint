@@ -15,7 +15,7 @@ namespace modint
 	constexpr ull width(array<ull,2> a){return div(a[0])+div(a[1]);}
 	constexpr bool fit(array<u128,2> a)
 	{
-		constexpr ull W_LIM=-1ull/MOD;
+		constexpr ull W_LIM=-1ull/MOD&-2;
 		if(a[0]>-1ull||a[1]>-1ull)return false;
 		return width({(ull)a[0],(ull)a[1]})<=W_LIM;
 	}
@@ -354,6 +354,21 @@ void test7()
 		ans+=COND(i&1,a*a*b*3_m,b*b*c*-4_m);
 	}
 	printf("%d\n",ans.to_mint().to_int());
+}
+namespace modint
+{
+	template<ull V0,ull V1>struct mint_debug
+	{
+		static constexpr bool is_mint_expr=fit({V0,V1});
+		static constexpr array<ull,2> V{V0,V1};
+		ull a;
+	};
+	void test()
+	{
+		mint_debug<(-1ull/MOD-1)*MOD,0> a;
+		mint_debug<(-1ull/MOD-1)*MOD,0> b;
+		mint c=a+b;
+	}
 }
 int main()
 {
