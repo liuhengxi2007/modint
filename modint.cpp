@@ -189,6 +189,7 @@ namespace modint
 		template<int O,typename A,typename B>constexpr mint_acc(mint_expr<O,A,B> b):a0(b.to_mint_uint()),a1(0){}
 		template<typename B>constexpr enable_if_t<B::is_mint_expr,void> operator+=(B b)
 		{
+			b.a+=div(B::V[1])*MOD;
 			a0+=b.a;a1+=a0<b.a;
 		}
 		constexpr uint to_mint_uint()
@@ -338,7 +339,7 @@ void test6()
 		a=(uint)((ull)i*a%MOD);
 		b=(uint)((ull)(i+7)*b%MOD);
 		c=(uint)((ull)(i+14)*c%MOD);
-		ans=(uint)((ans+(i&1?3ull*a*a%MOD*b:4ull*(MOD-b)*b%MOD*c))%MOD);
+		ans=(uint)((ans+(i&1?3ull*(MOD-a)*a%MOD*b:4ull*b*b%MOD*c))%MOD);
 	}
 	printf("%d\n",ans);
 }
@@ -351,7 +352,7 @@ void test7()
 		a*=mint::raw(i);
 		b*=mint::raw(i+7);
 		c*=mint::raw(i+14);
-		ans+=COND(i&1,a*a*b*3_m,b*b*c*-4_m);
+		ans+=-COND(i&1,a*a*b*3_m,b*b*c*-4_m);
 	}
 	printf("%d\n",ans.to_mint().to_int());
 }
